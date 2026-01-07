@@ -17,24 +17,51 @@ public class DiceItem extends Item {
         this.sides = sides;
     }
 
-    @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        if (!level.isClientSide) {
-            int roll = level.getRandom().nextInt(sides) + 1;
-            if (roll == sides)
-            {
-                player.sendSystemMessage(
-                        Component.literal("LEGENDARY CRIT " + sides + " ROLL")
-                );
-            }
-            else
-            {
-                player.sendSystemMessage(
-                        Component.literal("d" + sides + ": " + roll)
-                );
-            }
+    public InteractionResultHolder<ItemStack> use(
+            Level level,
+            Player player,
+            InteractionHand hand
+    ) {
 
+        if (!level.isClientSide) {
+
+            int roll = level.getRandom().nextInt(sides) + 1;
+            Component msg;
+
+            if (player.isShiftKeyDown()) {
+                if (roll == sides)
+                {
+                    msg = Component.literal(
+                            "LEGENDARY " + sides + " ROLL!!!!"
+                    );
+                }
+                else
+                {
+                    msg = Component.literal(
+                            "You rolled " + sides
+                    );
+                }
+
+                player.sendSystemMessage(msg);
+            }
+            else {
+                if (roll == sides)
+                {
+                    msg = Component.literal(
+                            player.getName().getString() + " ROLLED A LEGENDARY CRIT" + sides + "ON A D"+sides
+                    );
+                }
+                else {
+                    msg = Component.literal(
+                            player.getName().getString() + " rolled d" + sides + ": " + roll
+                    );
+                }
+                level.getServer()
+                        .getPlayerList()
+                        .broadcastSystemMessage(msg, false);
+            }
         }
+
         return InteractionResultHolder.sidedSuccess(
                 player.getItemInHand(hand),
                 level.isClientSide
