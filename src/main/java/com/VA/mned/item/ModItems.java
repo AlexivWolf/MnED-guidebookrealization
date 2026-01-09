@@ -37,7 +37,11 @@ public class ModItems {
     );
     public static final RegistryObject<Item> D10 = ITEMS.register(
             "d10",
-            () -> new DiceItem(new Item.Properties().stacksTo(1), 4)
+            () -> new DiceItem(new Item.Properties().stacksTo(1), 10)
+    );
+    public static final RegistryObject<Item> ConeMaker = ITEMS.register(
+            "conemaker",
+            () -> new ConeMaker(new Item.Properties().stacksTo(1), 3)
     );
 
     public static void register(IEventBus bus) {
