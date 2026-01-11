@@ -58,7 +58,7 @@ public class DiceItem extends Item {
                 }
                 else
                 {
-                    SayPublic(fixedRoll, level, player, sides);
+                    SayPublic(roll, level, player, sides);
                 }
             }
 
@@ -73,13 +73,20 @@ public class DiceItem extends Item {
     public void SayPrivate(int roll, Player player, int sides)
     {
         Component msg;
-        if (roll == sides)
+        if (roll == sides && sides == 20)
         {
             msg = Component.literal(
                     "LEGENDARY " + sides + " ROLL ON A D" + sides
 
             );
             msg = msg.copy().withStyle(ChatFormatting.GOLD);
+        }
+        else if (roll == 1 && sides == 20)
+        {
+            msg = Component.literal(
+                    "YOU ARE A LOOSER! YOU ROLLED "+ roll
+            );
+            msg = msg.copy().withStyle(ChatFormatting.RED);
         }
         else
         {
@@ -93,12 +100,19 @@ public class DiceItem extends Item {
     public void SayPublic(int roll, Level level, Player player, int sides)
     {
         Component msg;
-        if (roll == sides)
+        if (roll == sides && sides == 20)
         {
             msg = Component.literal(
                     player.getName().getString() + " ROLLED A LEGENDARY CRIT " + sides + " ON A D"+sides
             );
             msg = msg.copy().withStyle(ChatFormatting.GOLD);
+        }
+        else if (roll == 1 && sides == 20)
+        {
+            msg = Component.literal(
+                    player.getName().getString() + " IS A LOOSER! THEY ROLLED  " + roll + " ON A D"+sides
+            );
+            msg = msg.copy().withStyle(ChatFormatting.RED);
         }
         else {
             msg = Component.literal(
