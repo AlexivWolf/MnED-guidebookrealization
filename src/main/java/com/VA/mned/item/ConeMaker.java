@@ -3,6 +3,8 @@ package com.VA.mned.item;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -11,9 +13,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-public class ConeMaker extends Item
-{
+public class ConeMaker extends Item {
+
     private final int distance;
+
     public static final String LENGTH_TAG = "Length";
     public static final String ANGLE_TAG = "Angle";
 
@@ -22,92 +25,88 @@ public class ConeMaker extends Item
         this.distance = distance;
     }
 
-
     private int getLengthTag(ItemStack stack) {
         CompoundTag tag = stack.getTag();
-        if (tag != null && tag.contains(ConeMaker.LENGTH_TAG)) {
-            return tag.getInt(ConeMaker.LENGTH_TAG);
+        if (tag != null && tag.contains(LENGTH_TAG)) {
+            return tag.getInt(LENGTH_TAG);
         }
         return 0;
     }
+
     private float getAngleTag(ItemStack stack) {
         CompoundTag tag = stack.getTag();
-        if (tag != null && tag.contains(ConeMaker.ANGLE_TAG)) {
-            return tag.getInt(ConeMaker.ANGLE_TAG);
+        if (tag != null && tag.contains(ANGLE_TAG)) {
+            return tag.getFloat(ANGLE_TAG);
         }
         return 30f;
     }
 
-    public InteractionResultHolder<ItemStack> use(Level level, Player player,InteractionHand hand)
-    {
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+
         ItemStack stack = player.getItemInHand(hand);
-        int customdist = getLengthTag(stack);
-        float customangle = getAngleTag(stack);
-        if (customdist != 0)
-        {
-            MakeCone(level, player, customdist+1, customangle);
-        }
-        else {
-            MakeCone(level, player, distance, customangle);
+
+        // КЛИЕНТ
+        if (level.isClientSide) {
+            return InteractionResultHolder.success(stack);
         }
 
-        return InteractionResultHolder.sidedSuccess(
-                player.getItemInHand(hand),
-                level.isClientSide
-        );
+        // СЕРВЕР
+        if (player instanceof ServerPlayer serverPlayer) {
 
+            int customDist = getLengthTag(stack);
+            float angle = getAngleTag(stack);
+
+            ServerLevel serverLevel = serverPlayer.serverLevel();
+
+            int finalDistance = customDist > 0 ? customDist : distance;
+
+            makeCone(serverLevel, serverPlayer, finalDistance, angle);
+        }
+
+        return InteractionResultHolder.consume(stack);
     }
 
-    public static void MakeCone(Level level, Player player, int distance, float angle)
-    {
+    private static void makeCone(ServerLevel level, ServerPlayer player, int distance, float angle) {
+        // я себе щас вены повскрываю сука
         Vec3 origin = player.position().add(0, player.getEyeHeight(), 0);
         Vec3 dir = player.getLookAngle().normalize();
-        float angleDeg = angle;    // угол раскрытия конуса
-        double cosAngle = Math.cos(Math.toRadians(angleDeg)); //Косинусы хуёсинусы....
+
+        double cosAngle = Math.cos(Math.toRadians(angle));
 
         BlockPos originBlock = BlockPos.containing(origin);
-
+        //всё перебираем чтобы не было смерти в нищите
         for (int x = -distance; x <= distance; x++) {
             for (int y = -distance; y <= distance; y++) {
                 for (int z = -distance; z <= distance; z++) {
 
-                    BlockPos pos = originBlock.offset(x, 0, z);
+                    BlockPos pos = originBlock.offset(x, y, z);
 
                     Vec3 point = Vec3.atCenterOf(pos);
                     Vec3 toPoint = point.subtract(origin);
 
                     double dist = toPoint.length();
-
-
-                    if (dist > distance || distance < 0.0001)
-                        continue;
+                    if (dist > distance || dist < 0.001) continue;
 
                     Vec3 toPointNorm = toPoint.normalize();
-
-                    //Проверка угла между направлением взгляда и точкой
                     double dot = dir.dot(toPointNorm);
 
-                    if (dot < cosAngle) {
-                        continue;
-                    }
-
-                    //Пока что частицы просто
-                    level.addParticle(
+                    if (dot < cosAngle) continue;
+                    // СУКААААААААААААААААААААААААА
+                    // ADD PARTICLES КЛИЕНТ
+                    //идите нахуй, на сегодня это всё
+                    
+                    level.sendParticles(
                             ParticleTypes.FLAME,
-                            pos.getX() + 0.5,
-                            pos.getY() + 0.5,
-                            pos.getZ() + 0.5,
-                            0,
-                            0,
-                            0
+                            point.x,
+                            point.y,
+                            point.z,
+                            1,          // количество
+                            0, 0, 0,    // разброс
+                            0           // скорость
                     );
-                    // ух нихуя
                 }
-                //продолжается!
             }
-            // оно
         }
-        //бесконечное
     }
-    //нихуя, кончилось
 }
